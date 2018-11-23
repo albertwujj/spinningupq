@@ -1,3 +1,4 @@
+import mujoco_py
 from spinup.algos.ddpg.core import mlp, mlp_actor_critic
 from spinup.utils.run_utils import ExperimentGrid
 from spinup import ddpg

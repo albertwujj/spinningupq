@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from spinup.exercises.problem_set_1 import exercise1_1
+from tensorflow.contrib.layers import fully_connected as fc
 
 """
 
@@ -33,12 +34,10 @@ def mlp(x, hidden_sizes=(32,), activation=tf.tanh, output_activation=None):
         A TF symbol for the output of an MLP that takes x as an input.
 
     """
-    #######################
-    #                     #
-    #   YOUR CODE HERE    #
-    #                     #
-    #######################
-    pass
+
+    for i in range(len(hidden_sizes) - 1):
+        x = fc(x, hidden_sizes[i], activation_fn=activation)
+    return fc(x, hidden_sizes[len(hidden_sizes) - 1], activation_fn=output_activation)
 
 def mlp_gaussian_policy(x, a, hidden_sizes, activation, output_activation, action_space):
     """
@@ -62,24 +61,21 @@ def mlp_gaussian_policy(x, a, hidden_sizes, activation, output_activation, actio
             environment this agent will interact with.
 
     Returns:
-        pi: A symbol for sampling stochastic actions from a Gaussian 
+        pi: A symbol for sampling stochastic actions from a Gaussian
             distribution.
 
-        logp: A symbol for computing log-likelihoods of actions from a Gaussian 
+        logp: A symbol for computing log-likelihoods of actions from a Gaussian
             distribution.
 
-        logp_pi: A symbol for computing log-likelihoods of actions in pi from a 
+        logp_pi: A symbol for computing log-likelihoods of actions in pi from a
             Gaussian distribution.
 
     """
-    #######################
-    #                     #
-    #   YOUR CODE HERE    #
-    #                     #
-    #######################
-    # mu = 
-    # log_std = 
-    # pi = 
+    action_dim = a.shape.as_list()[-1]
+
+    mu = mlp(x, hidden_sizes + (action_dim,), activation, output_activation)
+    log_std = tf.constant(-0.5, shape=(action_dim,))
+    pi = mu + tf.random_normal(tf.shape(mu)) * tf.exp(log_std)
 
     logp = exercise1_1.gaussian_likelihood(a, mu, log_std)
     logp_pi = exercise1_1.gaussian_likelihood(pi, mu, log_std)

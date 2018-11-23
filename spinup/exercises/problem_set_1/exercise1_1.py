@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import math
 
 """
 
@@ -23,12 +24,8 @@ def gaussian_likelihood(x, mu, log_std):
     Returns:
         Tensor with shape [batch]
     """
-    #######################
-    #                     #
-    #   YOUR CODE HERE    #
-    #                     #
-    #######################
-    return tf.constant(0)
+
+    return - (tf.reduce_sum(tf.square(x - mu) / tf.square(tf.exp(log_std)) + 2 * log_std, -1) + x.shape.as_list()[1] * math.log(2 * math.pi)) / 2
 
 
 if __name__ == '__main__':

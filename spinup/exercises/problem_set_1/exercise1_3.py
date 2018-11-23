@@ -1,3 +1,4 @@
+import mujoco_py
 import numpy as np
 import tensorflow as tf
 import gym
@@ -6,6 +7,7 @@ from spinup.algos.td3 import core
 from spinup.algos.td3.td3 import td3 as true_td3
 from spinup.algos.td3.core import get_vars
 from spinup.utils.logx import EpochLogger
+
 
 """
 
@@ -174,18 +176,15 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # pi, q1, q2, q1_pi = 
-        pass
+
+
+        pi, q1, q2, q1_pi = actor_critic(x_ph, a_ph, action_space=env.action_space)
+
     
     # Target policy network
     with tf.variable_scope('target'):
-        #######################
-        #                     #
-        #   YOUR CODE HERE    #
-        #                     #
-        #######################
-        # pi_targ =
-        pass
+
+        pi_targ, _, _, _ = actor_critic(x2_ph, a_ph, action_space=env.action_space)
     
     # Target Q networks
     with tf.variable_scope('target', reuse=True):
@@ -197,13 +196,18 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #                     #
         #######################
 
+        noise = tf.clip_by_value(tf.random_normal(tf.shape(pi_targ), stddev=target_noise), -noise_clip, noise_clip)
+        noisy_act = tf.clip_by_value(pi_targ + noise, env.action_space.low[0], env.action_space.high[0])
+
+
         # Target Q-values, using action from smoothed target policy
         #######################
         #                     #
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        pass
+        _, q1_targ, q2_targ, _ = actor_critic(x2_ph, noisy_act, action_space=env.action_space)
+
 
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
@@ -225,10 +229,10 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     #   YOUR CODE HERE    #
     #                     #
     #######################
-    # pi_loss = 
-    # q1_loss = 
-    # q2_loss = 
-    # q_loss = 
+    pi_loss = -q1_pi
+    q1_loss = tf.square(q1 - (r_ph + (tf.ones((1)) - d_ph) * gamma * tf.minimum(q1_targ,q2_targ)))
+    q2_loss = tf.square(q2 - (r_ph + (tf.ones((1)) - d_ph) * gamma * tf.minimum(q1_targ,q2_targ)))
+    q_loss = q1_loss + q2_loss
 
     #=========================================================================#
     #                                                                         #
@@ -376,10 +380,11 @@ if __name__ == '__main__':
         max_ep_len=150,
         seed=args.seed, 
         logger_kwargs=logger_kwargs,
-        epochs=10
+        epochs=100
         )
-    
-    if args.use_soln:
+
+
+    if True:
         true_td3(**all_kwargs)
     else:
         td3(**all_kwargs)
